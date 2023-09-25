@@ -1,0 +1,149 @@
+#fully qualified paths /home/maciej_sicinski/informatica_mapping_translator
+#/home/maciej_sicinski/informatica_mapping_translator/xml_metadata
+#/home/maciej_sicinski/informatica_mapping_translator/teradata_metadata_extract
+#/home/maciej_sicinski/informatica_mapping_translator/sql_extract/bq_based_queries
+#/home/maciej_sicinski/informatica_mapping_translator/sql_extract/teradata_based_queries
+#/home/maciej_sicinski/informatica_mapping_translator/sql_extract/errors
+
+#find /Users/MaciejSicinski/xml_parsing/dwh-dumper-project/sql_extract -type f -exec rsync -av --progress {} ..backup/ \;
+
+#prerequisites
+
+pip install gcloud
+pip install sqlglot 
+
+sudo apt update
+sudo apt install rsync
+
+sudo apt-get install python3-venv
+
+#create a main folder
+
+mkdir informatica_mapping_translator
+
+#create a folder for input XML files
+
+mkdir xml_metadata
+
+#download XML files containing mappings metadata from GCS bucket into local directory
+
+gsutil -m cp -r gs://teradata_metadata/informatica/dev/* xml_metadata/
+
+cd informatica_mapping_translator
+
+#create a folder for installation files
+
+mkdir install
+
+cd install
+
+#clone a repository with the installation files for a translator
+
+gh repo clone google/dwh-migration-tools
+
+cd ..
+
+#create a folder to a parser(s)
+
+mkdir parsers
+
+cd parsers
+
+#download a parser to a parsers directory  of choice:
+
+curl -O https://raw.githubusercontent.com/maciejsicinski/xml_parser/main/dwh-dumper-project/parsers/sql_query_ports_mismatch_update_xml_parser.py
+
+cd ..
+
+#create a folder in which the translator will be installes
+
+mkdir dwh-dumper-project
+
+#copy the client libraries into the folder of choice
+
+cp -R /install/dwh-migration-tools/client/examples/teradata/sql dwh-dumper-project
+
+#remove sample input files
+
+rm -rf dwh-dumper-project/sql/input/*
+
+#create a folder for metadata from teradata
+
+mkdir /dwh-dumper-project/sql/input/metadata
+
+#copy the metadata extracted from Teradata (using dwh-dumper supplied by GCP)
+
+gsutil cp gs://teradata_metadata/teradata/dev/dwh-dumper-extract/dwh-migration-teradata-metadata.zip /dwh-dumper-project/sql/input/metadata
+
+#follow the instruction on how to setup dwh-dumper (dwh-migration-tools repo)
+
+#create a python virtual environment and install the batch translation client
+
+python3 -m venv venv
+source venv/bin/activate
+
+pip install /home/maciej_sicinski/informatica_mapping_translator/install/dwh-migration-tools/client
+
+cd dwh-dumper-project/sql
+
+#copy exported sql queries into input folders (prerequisite - extractSqlQueries from main parser)
+
+find ../../sql_extract/teradata_based_queries -type f -exec rsync -av --progress {} input/ \;
+
+sudo chmod a+rwx /home/informatica_mapping_translator/
+
+#set up environmental variables
+
+export BQMS_VERBOSE="False"
+export BQMS_MULTITHREADED="True"
+export BQMS_PROJECT="gcp-ch-d-prj-i-edp"
+export BQMS_GCS_BUCKET="translation_gcp_api/dev"
+export BQMS_TRANSLATED_PATH="translation_folder"
+
+#change default database to Dev_Stg
+
+cd config
+
+vim config.yaml
+
+# HOW TO AUTOMATE THAT? # CREATE A FILE STORE IN A BUCKET AND DONWLOAD
+
+#Set default application login (service account with read/write permissions to the GCP bucket and bigquerymigration role)
+
+#How to automate that #??
+
+gcloud auth application-default login
+
+#run the executable
+
+./run.sh
+
+#how to automate the folder name in a bucket?
+
+#why doesnt it work with "../../sql_extract(...)"?
+
+gsutil -m cp -r gs://translation_gcp_api/dev/1689675656369489975-udrt7u2vrmhfq/translated/* /home/maciej_sicinski/informatica_mapping_translator/sql_extract/bq_based_queries
+
+
+
+gsutil -m cp -r gs://translation_gcp_api/dev/hardcoded_directory/translated/* ./
+
+
+find ./ -type f | wc -l
+
+
+
+
+# Get current date and time
+current_datetime = datetime.datetime.now()
+
+# Format the date and time as a string
+datetime_string = current_datetime.strftime("%Y%m%d%H%M%S")
+
+# Generate a random number between 0 and 9999
+random_number = random.randint(0, 9999)
+
+# Create the final string combining date, time, and random number
+result_string = f"{datetime_string}_{random_number:04d}"
+
+print(result_string)
