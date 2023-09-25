@@ -675,3 +675,6 @@ def main():
 
     print(f"number of affected mappings: {error}")
     print(f"number of mappings: {total}")
+
+if __name__ == "__main__":
+    main()
