@@ -621,8 +621,9 @@ def processWorkflows():
         if filename.endswith(".XML"):
             file_path = os.path.join(folder_path, filename)
             a = processFileWf(file_path, filename)
-            i+=a
-    print(f"number of parsing errors in workflows: {i}")
+            #i+=a
+    #print(f"number of parsing errors in workflows: {i}")
+    print("processed")
 
 def extractingQueries():
     print("Extracting TD queries")
@@ -651,12 +652,6 @@ def main():
         return
     option = sys.argv[1]
 
-    mapping_errors = {} 
-    mapping_total = {} 
-    i = 0
-    error = 0
-    a = 0
-    b = 0
     if option == "a":
         processWorkflows()
         extractingQueries()
@@ -677,4 +672,10 @@ def main():
     print(f"number of mappings: {total}")
 
 if __name__ == "__main__":
+    mapping_errors = {} 
+    mapping_total = {} 
+    i = 0
+    error = 0
+    a = 0
+    b = 0
     main()
