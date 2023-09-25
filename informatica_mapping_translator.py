@@ -7,12 +7,14 @@ from sqlglot.dialects.teradata import Teradata
 import datetime
 import random
 import subprocess 
+import sys
 
 prefix_vm = "/opt/imt/"
 
 # Folder path to scan
 run_sh_path = f"{prefix_vm}dwh-dumper-project/sql/run.sh"
 folder_path = f"{prefix_vm}xml_metadata"
+folder_path_wf = f"{prefix_vm}xml_metadata/wf"
 teradata_metadata_path = f"{prefix_vm}teradata_metadata_extract"
 #valid_mappings_path = f"{prefix_vm}valid_mappings"
 
@@ -21,6 +23,7 @@ translated_folder_path = f"{prefix_vm}sql_extract/bq_based_queries"
 output_dir_path = f"{prefix_vm}sql_extract/teradata_based_queries"
 errors_dir_path = f"{prefix_vm}sql_extract/errors"
 xml_output_dir = f"{prefix_vm}xml_metadata_out"
+xml_output_dir_wf = f"{prefix_vm}xml_metadata_out/wf"
 table_names_errors_dir_path = f"{prefix_vm}sql_extract/errors_table_names"
 td_output = f"{prefix_vm}dwh-dumper-project/sql/input"
 
@@ -30,6 +33,44 @@ os.makedirs(errors_dir_path, exist_ok=True)
 os.makedirs(translated_folder_path, exist_ok=True)
 os.makedirs(xml_output_dir, exist_ok=True)
 os.makedirs(table_names_errors_dir_path, exist_ok=True)
+os.makedirs(folder_path_wf, exist_ok=True)
+os.makedirs(xml_output_dir_wf, exist_ok=True)
+
+def processFileWf(filename, file_name):
+    """
+    This function parses through the XML files and modifies its content in order to generate informatica workflow compatible with BigQuery.
+
+
+    For each ...
+    Update XML file with modified values
+    Write informatica header into a file
+    Write modified XML into a out file
+
+    Parameters
+    ----------
+    filename : str: 
+        a path to the XML document (Informatica workflow)
+    Returns
+    -------
+    bool
+        True if successful, False otherwise.  
+
+    """
+    with open(filename, "r", encoding="iso-8859-1") as fh:
+        j = 0
+        doc = ET.parse(fh)
+        root = doc.getroot()
+        for folder in root.iter("FOLDER"):
+            print(folder)
+        
+        filename_out = file_name + "_OUT.XML"
+        file_path_out = os.path.join(xml_output_dir_wf, filename_out)
+        with open(file_path_out, "w", encoding="iso-8859-1") as fh:
+            fh.write("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n")
+            fh.write("<!-- Informatica proprietary -->\n")
+            fh.write("<!DOCTYPE POWERMART SYSTEM \"powrmart.dtd\">\n")
+            fh.write(ET.tostring(root).decode("iso-8859-1"))
+        return j
 
 def removePrefixFromSQL(sql_query):
     """
@@ -574,41 +615,63 @@ def processFile(filename, file_name):
             fh.write(ET.tostring(root).decode("iso-8859-1"))
         return j
 
-# Main program                                    
-# Process each file in the folder and save each sql query to a separate file
-mapping_errors = {} 
-mapping_total = {} 
-i = 0
-error = 0
-a = 0
-b = 0
-#print("preparing valid mapping list")
-#valid_mapping_names = set()
-#with open(valid_mappings_path, "r") as valid_mappings_file:
-#    for line in valid_mappings_file:
-#        valid_mapping_names.add(line.strip())
+def processWorkflows():
+    print("Processing workflows")
+    for filename in os.listdir(folder_path_wf):
+        if filename.endswith(".XML"):
+            file_path = os.path.join(folder_path, filename)
+            a = processFileWf(file_path, filename)
+            i+=a
+    print(f"number of parsing errors in workflows: {i}")
 
-print("Extracting TD queries")
-for filename in os.listdir(folder_path):
-    if filename.endswith(".XML"):
-        file_path = os.path.join(folder_path, filename)
-        extractQueries(file_path)
-print("Queries extracted")
-# Setup GCP Bulk Translate API and translate the queries
+def extractingQueries():
+    print("Extracting TD queries")
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".XML"):
+            file_path = os.path.join(folder_path, filename)
+            extractQueries(file_path)
+    print("Queries extracted")
 
-bulkTranslate()
+def processMappings():
+    # Process each file in the folder to parse and update the XML's
+    print("running main parser")
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".XML"):
+            file_path = os.path.join(folder_path, filename)
+            a = processFile(file_path, filename)
+            i+=a
+    print(f"number of parsing errors: {i}")
 
-# Process each file in the folder to parse and update the XML's
-print("running main parser")
-for filename in os.listdir(folder_path):
-    if filename.endswith(".XML"):
-        file_path = os.path.join(folder_path, filename)
-        a = processFile(file_path, filename)
-        i+=a
-print(f"number of parsing errors: {i}")
+def main():
 
-error = sum(mapping_errors.values())
-total = sum(mapping_total.values())
+    # Main program                                    
+    # Process each file in the folder and save each sql query to a separate file
+    if len(sys.argv) != 2:
+        print("Usage: python script.py [a/m/w]")
+        return
+    option = sys.argv[1]
 
-print(f"number of affected mappings: {error}")
-print(f"number of mappings: {total}")
+    mapping_errors = {} 
+    mapping_total = {} 
+    i = 0
+    error = 0
+    a = 0
+    b = 0
+    if option == "a":
+        processWorkflows()
+        extractingQueries()
+        # Setup GCP Bulk Translate API and translate the queries
+        bulkTranslate()
+        processMappings()
+    elif option == "m":
+        processMappings()
+    elif option == "w":
+        processWorkflows()
+    else:
+        print("Invalid option. Use 'a' for the whole program including extraction of the queries and translation API, 'm' for processing mappings only, or 'w' for processing workflows only.")
+
+    error = sum(mapping_errors.values())
+    total = sum(mapping_total.values())
+
+    print(f"number of affected mappings: {error}")
+    print(f"number of mappings: {total}")
