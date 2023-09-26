@@ -58,11 +58,12 @@ def processFileWf(filename, file_name):
     """
     with open(filename, "r", encoding="iso-8859-1") as fh:
         j = 0
+        wf = 0
         doc = ET.parse(fh)
         root = doc.getroot()
         for folder in root.iter("FOLDER"):
             print(folder)
-        
+        wf += 1
         filename_out = file_name + "_OUT.XML"
         file_path_out = os.path.join(xml_output_dir_wf, filename_out)
         with open(file_path_out, "w", encoding="iso-8859-1") as fh:
@@ -70,7 +71,7 @@ def processFileWf(filename, file_name):
             fh.write("<!-- Informatica proprietary -->\n")
             fh.write("<!DOCTYPE POWERMART SYSTEM \"powrmart.dtd\">\n")
             fh.write(ET.tostring(root).decode("iso-8859-1"))
-        return j
+        return j, wf
 
 def removePrefixFromSQL(sql_query):
     """
@@ -643,39 +644,37 @@ def processMappings():
             i+=a
     print(f"number of parsing errors: {i}")
 
-def main():
 
-    # Main program                                    
-    # Process each file in the folder and save each sql query to a separate file
-    if len(sys.argv) != 2:
-        print("Usage: python script.py [a/m/w]")
-        return
-    option = sys.argv[1]
+# Main program                                    
+# Process each file in the folder and save each sql query to a separate file
+if len(sys.argv) != 2:
+    print("Usage: python script.py [a/m/w]")
+    sys.exit()
+option = sys.argv[1]
+mapping_errors = {} 
+wf_errors = {} 
+mapping_total = {} 
+wf_total = 0 
+error_count = 0
 
-    if option == "a":
-        processWorkflows()
-        extractingQueries()
-        # Setup GCP Bulk Translate API and translate the queries
-        bulkTranslate()
-        processMappings()
-    elif option == "m":
-        processMappings()
-    elif option == "w":
-        processWorkflows()
-    else:
-        print("Invalid option. Use 'a' for the whole program including extraction of the queries and translation API, 'm' for processing mappings only, or 'w' for processing workflows only.")
+if option == "a":
+    processWorkflows()
+    extractingQueries()
+    # Setup GCP Bulk Translate API and translate the queries
+    bulkTranslate()
+    processMappings()
+elif option == "m":
+    processMappings()
+elif option == "w":
+    processWorkflows()
+else:
+    print("Invalid option. Use 'a' for the whole program including extraction of the queries and translation API, 'm' for processing mappings only, or 'w' for processing workflows only.")
 
-    error = sum(mapping_errors.values())
-    total = sum(mapping_total.values())
+error = sum(mapping_errors.values())
+total = sum(mapping_total.values())
 
-    print(f"number of affected mappings: {error}")
-    print(f"number of mappings: {total}")
+print(f"number of affected mappings: {error}")
+print(f"number of mappings: {total}")
 
-if __name__ == "__main__":
-    mapping_errors = {} 
-    mapping_total = {} 
-    i = 0
-    error = 0
-    a = 0
-    b = 0
-    main()
+print(f"number of wf: {wf_total}")
+print(f"number of wf errors: {wf_errors}")
