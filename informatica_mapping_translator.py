@@ -680,11 +680,11 @@ else:
     print("Invalid option. Use 'a' for the whole program including extraction of the queries and translation API, 'm' for processing mappings only, or 'w' for processing workflows only.")
 
 error = sum(mapping_errors.values())
-total = sum(mapping_total.values())
-total = sum(wf_total.values())
+total_map = sum(mapping_total.values())
+total_wf = sum(wf_total.values())
 
 print(f"number of affected mappings: {error}")
-print(f"number of mappings: {total}")
+print(f"number of mappings: {tota_map}")
 
-print(f"number of wf: {wf_total}")
+print(f"number of wf: {total_wf}")
 print(f"number of wf errors: {wf_errors}")
