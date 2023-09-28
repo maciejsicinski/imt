@@ -60,13 +60,12 @@ def processFileWf(filename, file_name):
         doc = ET.parse(fh)
         root = doc.getroot()
         for folder in root.iter("FOLDER"):
-            folder_name = folder.attrib["NAME"]
-            for child in folder.iter("MAPPING"):
-                mapping_name = child.attrib["NAME"]   
+            for mapping in folder.iter("MAPPING"):
+                mapping_name = mapping.attrib["NAME"]   
                 if mapping_name not in mapping_total:
                     mapping_total[mapping_name] = True 
-            for child in folder.iter("WORKFLOW"):        
-                wf_name = folder.attrib["NAME"]
+            for wf in folder.iter("WORKFLOW"):        
+                wf_name = wf.attrib["NAME"]
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
 
@@ -629,11 +628,8 @@ def processFile(filename, file_name):
 def processWorkflows():
     print("Processing workflows")
     for filename_wf in os.listdir(folder_path_wf):
-        print(filename_wf)
-        print(folder_path_wf)
         if filename_wf.endswith(".XML"):
             file_path_wf = os.path.join(folder_path_wf, filename_wf)
-            print(file_path_wf)
             a = processFileWf(file_path_wf, filename_wf)
             #i+=a
     #print(f"number of parsing errors in workflows: {i}")
