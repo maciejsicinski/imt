@@ -628,12 +628,13 @@ def processFile(filename, file_name):
 
 def processWorkflows():
     print("Processing workflows")
-    for filename in os.listdir(folder_path_wf):
-        print(filename)
+    for filename_wf in os.listdir(folder_path_wf):
+        print(filename_wf)
         print(folder_path_wf)
-        if filename.endswith(".XML"):
-            file_path = os.path.join(folder_path_wf, filename)
-            a = processFileWf(file_path, filename)
+        if filename_wf.endswith(".XML"):
+            file_path_wf = os.path.join(folder_path_wf, filename_wf)
+            print(file_path_wf)
+            a = processFileWf(file_path_wf, filename_wf)
             #i+=a
     #print(f"number of parsing errors in workflows: {i}")
     print("processed")
