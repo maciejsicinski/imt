@@ -57,13 +57,24 @@ def processFileWf(filename, file_name):
 
     """
     with open(filename, "r", encoding="iso-8859-1") as fh:
-        j = 0
-        wf = 0
         doc = ET.parse(fh)
         root = doc.getroot()
         for folder in root.iter("FOLDER"):
-            print(folder)
-        wf += 1
+            folder_name = folder.attrib["NAME"]
+            for child in folder.iter("MAPPING"):
+                mapping_name = child.attrib["NAME"]   
+                if mapping_name not in mapping_total:
+                    mapping_total[mapping_name] = True 
+            for child in folder.iter("WORKFLOW"):        
+                wf_name = folder.attrib["NAME"]
+                if wf_name not in wf_total:
+                    wf_total[wf_name] = True 
+
+
+
+        #folder -> workflow [get NAME] -> session [get MAPPINGNAME] -> SESSIONEXTENSION -> CONNECTIONREFERENCE [get CONNECTIONNAME and change it to the new one] 
+        # check if CNXREFNAME = "DB Connection" update VARIABLE="$newvariable" or CONNECTIONNAME = new_connection_tobq
+        #what about $source/target connection value
         filename_out = file_name + "_OUT.XML"
         file_path_out = os.path.join(xml_output_dir_wf, filename_out)
         with open(file_path_out, "w", encoding="iso-8859-1") as fh:
@@ -71,7 +82,6 @@ def processFileWf(filename, file_name):
             fh.write("<!-- Informatica proprietary -->\n")
             fh.write("<!DOCTYPE POWERMART SYSTEM \"powrmart.dtd\">\n")
             fh.write(ET.tostring(root).decode("iso-8859-1"))
-        return j, wf
 
 def removePrefixFromSQL(sql_query):
     """
@@ -654,7 +664,7 @@ option = sys.argv[1]
 mapping_errors = {} 
 wf_errors = {} 
 mapping_total = {} 
-wf_total = 0 
+wf_total = {} 
 error_count = 0
 
 if option == "a":
@@ -672,6 +682,7 @@ else:
 
 error = sum(mapping_errors.values())
 total = sum(mapping_total.values())
+total = sum(wf_total.values())
 
 print(f"number of affected mappings: {error}")
 print(f"number of mappings: {total}")

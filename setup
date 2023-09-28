@@ -29,6 +29,10 @@ mkdir xml_metadata
 
 gsutil -m cp -r gs://teradata_metadata/informatica/dev/* xml_metadata/
 
+#download XML files containing workflows metadata from GCS bucket into local directory
+
+gsutil -m cp -r gs://teradata_metadata/informatica/dev/wf* xml_metadata/wf
+
 cd informatica_mapping_translator
 
 #create a folder for installation files
@@ -51,7 +55,7 @@ cd parsers
 
 #download a parser to a parsers directory  of choice:
 
-curl -O https://raw.githubusercontent.com/maciejsicinski/xml_parser/main/dwh-dumper-project/parsers/sql_query_ports_mismatch_update_xml_parser.py
+curl -O https://raw.githubusercontent.com/maciejsicinski/imt/main/informatica_mapping_translator.py
 
 cd ..
 
