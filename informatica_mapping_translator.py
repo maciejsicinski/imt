@@ -684,7 +684,7 @@ total_map = sum(mapping_total.values())
 total_wf = sum(wf_total.values())
 
 print(f"number of affected mappings: {error}")
-print(f"number of mappings: {tota_map}")
+print(f"number of mappings: {total_map}")
 
 print(f"number of wf: {total_wf}")
 print(f"number of wf errors: {wf_errors}")
