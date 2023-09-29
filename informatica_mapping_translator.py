@@ -37,6 +37,20 @@ os.makedirs(table_names_errors_dir_path, exist_ok=True)
 os.makedirs(folder_path_wf, exist_ok=True)
 os.makedirs(xml_output_dir_wf, exist_ok=True)
 
+def removeFiles(folder_path):
+    file_list = os.listdir(folder_path)
+
+    # Loop through the files and delete them
+    for file_name in file_list:
+        file_path = os.path.join(folder_path, file_name)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)  # Delete files
+            elif os.path.isdir(file_path):
+                os.rmdir(file_path)   # Delete subdirectories (empty)
+        except Exception as e:
+            print(f"Error deleting {file_path}: {str(e)}")
+
 def splitSQLQuery(sql_query):
     # Regular expression to match DECLARE blocks
     declare_pattern = r'DECLARE[^;]+;'
@@ -593,7 +607,7 @@ def processFile(filename, file_name):
                             try:
                                 declare_block, main_query = splitSQLQuery(query)
                                 new_query = addColumnAlias(main_query, dialect)
-                                query = declare_block + '/n' + new_query
+                                query = "\n".join([declare_block, new_query])
                             except Exception as e:
                                 j+=1
                                 saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e))
@@ -697,6 +711,9 @@ wf_errors = {}
 mapping_total = {} 
 wf_total = {} 
 error_count = 0
+
+removeFiles(errors_dir_path)
+removeFiles(table_names_errors_dir_path)
 
 if option == "a":
     processWorkflows()
