@@ -1,4 +1,5 @@
 import os
+import re
 import xml.etree.ElementTree as ET
 import sqlglot
 from sqlglot import exp
@@ -36,6 +37,22 @@ os.makedirs(table_names_errors_dir_path, exist_ok=True)
 os.makedirs(folder_path_wf, exist_ok=True)
 os.makedirs(xml_output_dir_wf, exist_ok=True)
 
+def splitSQLQuery(sql_query):
+    # Regular expression to match DECLARE blocks
+    declare_pattern = r'DECLARE[^;]+;'
+    declare_matches = re.findall(declare_pattern, sql_query, re.DOTALL)
+
+    # Combine DECLARE blocks and the following fragment
+    first_fragment = ""
+    for i, declare_match in enumerate(declare_matches):
+        first_fragment += declare_match
+        if i < len(declare_matches) - 1:
+            first_fragment += "\n"
+
+    # Remove DECLARE blocks from the second fragment
+    second_fragment = re.sub(declare_pattern, '', sql_query)
+
+    return first_fragment.strip(), second_fragment.strip()
 
 def processFileWf(filename, file_name):
     """
@@ -574,15 +591,16 @@ def processFile(filename, file_name):
                                     if field.attrib["NAME"] in connected_from:
                                         port_names.append(field.attrib["NAME"])
                             try:
-                                new_query = addColumnAlias(query, dialect)
-                                query = new_query
+                                declare_block, main_query = splitSQLQuery(query)
+                                new_query = addColumnAlias(main_query, dialect)
+                                query = declare_block + '/n' + new_query
                             except Exception as e:
                                 j+=1
                                 saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e))
                                 if mapping_name not in mapping_errors:
                                     mapping_errors[mapping_name] = True      
-                            try:           
-                                sql_columns = findColumns(query, dialect)                 
+                            try:      
+                                sql_columns = findColumns(new_query, dialect)                 
                             except Exception as e:
                                 saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, errors_dir_path, str(e))
                                 j += 1
