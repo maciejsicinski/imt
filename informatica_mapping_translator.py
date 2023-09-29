@@ -657,6 +657,7 @@ def extractingQueries():
     print("Queries extracted")
 
 def processMappings():
+    i = 0
     # Process each file in the folder to parse and update the XML's
     print("running main parser")
     for filename in os.listdir(folder_path_wf):
