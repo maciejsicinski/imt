@@ -16,7 +16,7 @@ run_sh_path = f"{prefix_vm}dwh-dumper-project/sql/run.sh"
 folder_path = f"{prefix_vm}xml_metadata"
 folder_path_wf = f"{prefix_vm}xml_metadata/wf"
 teradata_metadata_path = f"{prefix_vm}teradata_metadata_extract"
-#valid_mappings_path = f"{prefix_vm}valid_mappings"
+valid_mappings_path = f"{prefix_vm}lookups/valid_mappings"
 
 # Output directory path
 translated_folder_path = f"{prefix_vm}sql_extract/bq_based_queries"
@@ -35,6 +35,7 @@ os.makedirs(xml_output_dir, exist_ok=True)
 os.makedirs(table_names_errors_dir_path, exist_ok=True)
 os.makedirs(folder_path_wf, exist_ok=True)
 os.makedirs(xml_output_dir_wf, exist_ok=True)
+
 
 def processFileWf(filename, file_name):
     """
@@ -56,14 +57,20 @@ def processFileWf(filename, file_name):
         True if successful, False otherwise.  
 
     """
+    valid_mapping_names = set()
+    with open(valid_mappings_path, "r") as valid_mappings_file:
+        for line in valid_mappings_file:
+            valid_mapping_names.add(line.strip())
+
     with open(filename, "r", encoding="iso-8859-1") as fh:
         doc = ET.parse(fh)
         root = doc.getroot()
         for folder in root.iter("FOLDER"):
             for mapping in folder.iter("MAPPING"):
                 mapping_name = mapping.attrib["NAME"]   
-                if mapping_name not in mapping_total:
-                    mapping_total[mapping_name] = True 
+                if mapping_name in valid_mapping_names:
+                    if mapping_name not in mapping_total:
+                        mapping_total[mapping_name] = True 
             for wf in folder.iter("WORKFLOW"):        
                 wf_name = wf.attrib["NAME"]
                 if wf_name not in wf_total:

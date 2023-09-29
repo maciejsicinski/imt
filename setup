@@ -21,6 +21,10 @@ sudo apt-get install python3-venv
 
 mkdir informatica_mapping_translator
 
+#create a lookup folder
+
+mkdir lookups
+
 #create a folder for input XML files
 
 mkdir xml_metadata
