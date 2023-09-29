@@ -523,6 +523,12 @@ def processFile(filename, file_name):
         True if successful, False otherwise.  
 
     """
+
+    valid_mapping_names = set()
+    with open(valid_mappings_path, "r") as valid_mappings_file:
+        for line in valid_mappings_file:
+            valid_mapping_names.add(line.strip())
+
     with open(filename, "r", encoding="iso-8859-1") as fh:
         j = 0
         doc = ET.parse(fh)
@@ -531,98 +537,98 @@ def processFile(filename, file_name):
             folder_name = folder.attrib["NAME"]
             for child in folder.iter("MAPPING"):
                 mapping_name = child.attrib["NAME"]    
-                #if mapping_name in valid_mapping_names:              
-                if mapping_name not in mapping_total:
-                    mapping_total[mapping_name] = True 
-                for sq in child.iter("TRANSFORMATION"):                
-                    replaceLoadIdExp(sq)
-                    field_dict = {} 
-                    conflict_update = {}
-                    ttype = sq.attrib["TYPE"]
-                    transformation_name = sq.attrib["NAME"]
-                    connected_from = getConnectedFrom(child, transformation_name)
-                    if ttype == "Source Qualifier":
-                        query = getSqlQuery(sq)
-                    if ttype == "Source Qualifier" and query is not None and len(query) > 0:     
-                        dialect = BigQuery
-                        translated_query = extractSqlQueryFromFile(folder_name, mapping_name, transformation_name, ttype)  
-                        if isinstance(translated_query, Exception) or not isAProperQuery(translated_query):
-                            if mapping_name not in mapping_errors:
-                                mapping_errors[mapping_name] = True 
-                            continue     
-                        if not isinstance(translated_query, Exception) and isAProperQuery(translated_query):
+                if mapping_name in valid_mapping_names:              
+                    if mapping_name not in mapping_total:
+                        mapping_total[mapping_name] = True 
+                    for sq in child.iter("TRANSFORMATION"):                
+                        replaceLoadIdExp(sq)
+                        field_dict = {} 
+                        conflict_update = {}
+                        ttype = sq.attrib["TYPE"]
+                        transformation_name = sq.attrib["NAME"]
+                        connected_from = getConnectedFrom(child, transformation_name)
+                        if ttype == "Source Qualifier":
+                            query = getSqlQuery(sq)
+                        if ttype == "Source Qualifier" and query is not None and len(query) > 0:     
                             dialect = BigQuery
-                            try:
-                                translated_query = removePrefixFromSQL(translated_query)
-                            except Exception as e:
-                                print(e)
-                                j+=1
-                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e)) 
+                            translated_query = extractSqlQueryFromFile(folder_name, mapping_name, transformation_name, ttype)  
+                            if isinstance(translated_query, Exception) or not isAProperQuery(translated_query):
                                 if mapping_name not in mapping_errors:
                                     mapping_errors[mapping_name] = True 
-                            updateSqlQuery(sq, translated_query)
-                            query = getSqlQuery(sq)
-                        port_names = []
-                        field_nodes = list(sq.iter("TRANSFORMFIELD"))
-                        for field in field_nodes:
-                                if field.attrib["NAME"] in connected_from:
-                                    port_names.append(field.attrib["NAME"])
-                        try:
-                            new_query = addColumnAlias(query, dialect)
-                            query = new_query
-                        except Exception as e:
-                            j+=1
-                            saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e))
-                            if mapping_name not in mapping_errors:
-                                mapping_errors[mapping_name] = True      
-                        try:           
-                            sql_columns = findColumns(query, dialect)                 
-                        except Exception as e:
-                            saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, errors_dir_path, str(e))
-                            j += 1
-                            if mapping_name not in mapping_errors:
-                                mapping_errors[mapping_name] = True 
-                            continue
-                        else:
-                            i = 0
-                            for field in sq.iter("TRANSFORMFIELD"):
-                                if i < len(sql_columns) and field.attrib["NAME"] in port_names:
-                                    if sql_columns[i].lower() != field.attrib["NAME"].lower():    
-                                        field_dict[field.attrib["NAME"]]= {  
-                                        "from": field.attrib["NAME"],
-                                        "to" : sql_columns[i]
-                                        }
-                                        next = sql_columns[i]
-                                        updated_ports, conflict_update_tmp = updateConflictingPortNames(
-                                            mapping=child,
-                                            transformation_name=transformation_name,
-                                            new_port=next,
-                                            port_names = port_names
-                                        )
-                                        if conflict_update_tmp:
-                                            conflict_update.update(conflict_update_tmp)
-                                        for item in updated_ports:
-                                            port_names.append(item)
-                                        field.attrib["NAME"] = sql_columns[i] 
-                                    i+=1
-                            field_dict_2 = {}
-                            if(conflict_update):
-                                for key, value in field_dict.items():
-                                    if key in conflict_update:
-                                        original_key = conflict_update[key]['original']
-                                        field_dict_2[original_key] = value
-                                        field_dict_2[original_key]['from'] = original_key
-                                    else:
-                                        field_dict_2[key] = value
-                                for key, value in conflict_update.items():
-                                    if key not in field_dict.keys() :
-                                        field_dict_2 [conflict_update[key]['original']]= {  
-                                        "from": conflict_update[key]['original'],
-                                        "to" : key
-                                        }
+                                continue     
+                            if not isinstance(translated_query, Exception) and isAProperQuery(translated_query):
+                                dialect = BigQuery
+                                try:
+                                    translated_query = removePrefixFromSQL(translated_query)
+                                except Exception as e:
+                                    print(e)
+                                    j+=1
+                                    saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e)) 
+                                    if mapping_name not in mapping_errors:
+                                        mapping_errors[mapping_name] = True 
+                                updateSqlQuery(sq, translated_query)
+                                query = getSqlQuery(sq)
+                            port_names = []
+                            field_nodes = list(sq.iter("TRANSFORMFIELD"))
+                            for field in field_nodes:
+                                    if field.attrib["NAME"] in connected_from:
+                                        port_names.append(field.attrib["NAME"])
+                            try:
+                                new_query = addColumnAlias(query, dialect)
+                                query = new_query
+                            except Exception as e:
+                                j+=1
+                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e))
+                                if mapping_name not in mapping_errors:
+                                    mapping_errors[mapping_name] = True      
+                            try:           
+                                sql_columns = findColumns(query, dialect)                 
+                            except Exception as e:
+                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, errors_dir_path, str(e))
+                                j += 1
+                                if mapping_name not in mapping_errors:
+                                    mapping_errors[mapping_name] = True 
+                                continue
                             else:
-                                field_dict_2 = field_dict
-                            updateConnectors(child, transformation_name, field_dict_2)
+                                i = 0
+                                for field in sq.iter("TRANSFORMFIELD"):
+                                    if i < len(sql_columns) and field.attrib["NAME"] in port_names:
+                                        if sql_columns[i].lower() != field.attrib["NAME"].lower():    
+                                            field_dict[field.attrib["NAME"]]= {  
+                                            "from": field.attrib["NAME"],
+                                            "to" : sql_columns[i]
+                                            }
+                                            next = sql_columns[i]
+                                            updated_ports, conflict_update_tmp = updateConflictingPortNames(
+                                                mapping=child,
+                                                transformation_name=transformation_name,
+                                                new_port=next,
+                                                port_names = port_names
+                                            )
+                                            if conflict_update_tmp:
+                                                conflict_update.update(conflict_update_tmp)
+                                            for item in updated_ports:
+                                                port_names.append(item)
+                                            field.attrib["NAME"] = sql_columns[i] 
+                                        i+=1
+                                field_dict_2 = {}
+                                if(conflict_update):
+                                    for key, value in field_dict.items():
+                                        if key in conflict_update:
+                                            original_key = conflict_update[key]['original']
+                                            field_dict_2[original_key] = value
+                                            field_dict_2[original_key]['from'] = original_key
+                                        else:
+                                            field_dict_2[key] = value
+                                    for key, value in conflict_update.items():
+                                        if key not in field_dict.keys() :
+                                            field_dict_2 [conflict_update[key]['original']]= {  
+                                            "from": conflict_update[key]['original'],
+                                            "to" : key
+                                            }
+                                else:
+                                    field_dict_2 = field_dict
+                                updateConnectors(child, transformation_name, field_dict_2)
         filename_out = file_name + "_OUT.XML"
         file_path_out = os.path.join(xml_output_dir, filename_out)
         with open(file_path_out, "w", encoding="iso-8859-1") as fh:
@@ -653,9 +659,9 @@ def extractingQueries():
 def processMappings():
     # Process each file in the folder to parse and update the XML's
     print("running main parser")
-    for filename in os.listdir(folder_path):
+    for filename in os.listdir(folder_path_wf):
         if filename.endswith(".XML"):
-            file_path = os.path.join(folder_path, filename)
+            file_path = os.path.join(folder_path_wf, filename)
             a = processFile(file_path, filename)
             i+=a
     print(f"number of parsing errors: {i}")
