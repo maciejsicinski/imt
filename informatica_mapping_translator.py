@@ -142,6 +142,11 @@ def removePrefixFromSQL(sql_query):
     string_to_replace_to = "dev_stg."
 
     modified_query = sql_query.replace(string_to_replace_from, string_to_replace_to)
+
+    string_to_replace_from = ", 'ROUND_HALF_EVEN'"
+    string_to_replace_to = ''
+
+    modified_query = modified_query.replace(string_to_replace_from, string_to_replace_to)
    
     return modified_query
 
