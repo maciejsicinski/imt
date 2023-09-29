@@ -22,7 +22,9 @@ valid_mappings_path = f"{prefix_vm}lookups/valid_mappings"
 # Output directory path
 translated_folder_path = f"{prefix_vm}sql_extract/bq_based_queries"
 output_dir_path = f"{prefix_vm}sql_extract/teradata_based_queries"
-errors_dir_path = f"{prefix_vm}sql_extract/errors"
+alias_errors_dir_path = f"{prefix_vm}sql_extract/alias_errors"
+column_errors_dir_path = f"{prefix_vm}sql_extract/column_errors"
+prefix_errors_dir_path = f"{prefix_vm}sql_extract/prefix_errors"
 xml_output_dir = f"{prefix_vm}xml_metadata_out"
 xml_output_dir_wf = f"{prefix_vm}xml_metadata_out/wf"
 table_names_errors_dir_path = f"{prefix_vm}sql_extract/errors_table_names"
@@ -30,7 +32,9 @@ td_output = f"{prefix_vm}dwh-dumper-project/sql/input"
 
 # Create the output directory if it doesn't exist
 os.makedirs(output_dir_path, exist_ok=True)
-os.makedirs(errors_dir_path, exist_ok=True)
+os.makedirs(alias_errors_dir_path, exist_ok=True)
+os.makedirs(column_errors_dir_path, exist_ok=True)
+os.makedirs(prefix_errors_dir_path, exist_ok=True)
 os.makedirs(translated_folder_path, exist_ok=True)
 os.makedirs(xml_output_dir, exist_ok=True)
 os.makedirs(table_names_errors_dir_path, exist_ok=True)
@@ -594,7 +598,7 @@ def processFile(filename, file_name):
                                 except Exception as e:
                                     print(e)
                                     j+=1
-                                    saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e)) 
+                                    saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, prefix_errors_dir_path, str(e)) 
                                     if mapping_name not in mapping_errors:
                                         mapping_errors[mapping_name] = True 
                                 updateSqlQuery(sq, translated_query)
@@ -610,13 +614,13 @@ def processFile(filename, file_name):
                                 query = "\n".join([declare_block, new_query])
                             except Exception as e:
                                 j+=1
-                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, table_names_errors_dir_path, str(e))
+                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, alias_errors_dir_path, str(e))
                                 if mapping_name not in mapping_errors:
                                     mapping_errors[mapping_name] = True      
                             try:      
                                 sql_columns = findColumns(new_query, dialect)                 
                             except Exception as e:
-                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, errors_dir_path, str(e))
+                                saveSqlQueryToFile(folder_name, mapping_name, transformation_name, ttype, column_errors_dir_path, str(e))
                                 j += 1
                                 if mapping_name not in mapping_errors:
                                     mapping_errors[mapping_name] = True 
@@ -712,7 +716,9 @@ mapping_total = {}
 wf_total = {} 
 error_count = 0
 
-removeFiles(errors_dir_path)
+removeFiles(alias_errors_dir_path)
+removeFiles(prefix_errors_dir_path)
+removeFiles(column_errors_dir_path)
 removeFiles(table_names_errors_dir_path)
 
 if option == "a":
