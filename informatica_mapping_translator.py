@@ -114,9 +114,12 @@ def processFileWf(filename, file_name):
     with open(filename, "r", encoding="iso-8859-1") as fh:
         doc = ET.parse(fh)
         root = doc.getroot()
+        print("I am there")
         for folder in root.iter("FOLDER"):
+            print(folder.attrib["NAME"])
             for mapping in folder.iter("MAPPING"):
                 mapping_name = mapping.attrib["NAME"]   
+                print(mapping_name)
                 if mapping_name in valid_mapping_names:
                     if mapping_name not in mapping_total:
                         mapping_total[mapping_name] = True 
