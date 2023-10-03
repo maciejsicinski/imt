@@ -48,12 +48,8 @@ def updateConnectionReference(connection_reference):
     connection_name_to = ""
     print(connection_reference)
     print(connection_reference.attrib["VARIABLE"])
-    print(connection_reference.set('CONNECTIONNAME'))
     if connection_reference.attrib["VARIABLE"].lower() == from_variable.lower():
         connection_reference.set('VARIABLE', to_variable)
-        connection_reference.set('CONNECTIONNAME', connection_name_to)
-
-
     return connection_reference
 
 
@@ -124,13 +120,15 @@ def processFileWf(filename, file_name):
                         mapping_total[mapping_name] = True 
             for wf in folder.iter("WORKFLOW"):        
                 wf_name = wf.attrib["NAME"]
+                print(wf_name)
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
                 for session in wf.iter("SESSION"): 
-                    for sext in session.iter("SESSIONEXTENTION"):
+                    print("sess")
+                    for sext in session.iter("SESSIONEXTENSION"):
                         print("ok")
                         for connection in sext.iter("CONNECTIONREFERENCE"):              
-                            print("ok") 
+                            print("okconn") 
                             connection = updateConnectionReference(connection)
 
 
