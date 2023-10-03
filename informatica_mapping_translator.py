@@ -46,7 +46,9 @@ def updateConnectionReference(connection_reference):
     from_variable = "$DBConnection_Stg_1"
     to_variable = "$EDP_QBQ_STG"
     connection_name_to = ""
-
+    print(connection_reference)
+    print(connection_reference.attrib["VARIABLE"])
+    print(connection_reference.set('CONNECTIONNAME'))
     if connection_reference.attrib["VARIABLE"].lower() == from_variable.lower():
         connection_reference.set('VARIABLE', to_variable)
         connection_reference.set('CONNECTIONNAME', connection_name_to)
@@ -114,26 +116,19 @@ def processFileWf(filename, file_name):
     with open(filename, "r", encoding="iso-8859-1") as fh:
         doc = ET.parse(fh)
         root = doc.getroot()
-        print("I am there")
         for folder in root.iter("FOLDER"):
-            print(folder.attrib["NAME"])
             for mapping in folder.iter("MAPPING"):
                 mapping_name = mapping.attrib["NAME"]   
-                print(mapping_name)
                 if mapping_name in valid_mapping_names:
                     if mapping_name not in mapping_total:
                         mapping_total[mapping_name] = True 
             for wf in folder.iter("WORKFLOW"):        
                 wf_name = wf.attrib["NAME"]
-                print(wf.attrib["NAME"])
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
                 for session in wf.iter("SESSION"): 
-                    print(session)
                     for sext in session.iter("SESSIONEXTENTION"):
-                        print(sext)
-                        for connection in sext.iter("CONNECTIONREFERENCE"):   
-                            print(connection)                   
+                        for connection in sext.iter("CONNECTIONREFERENCE"):               
                             connection = updateConnectionReference(connection)
 
 
