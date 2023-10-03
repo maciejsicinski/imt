@@ -46,10 +46,9 @@ def updateConnectionReference(connection_reference):
     from_variable = "$DBConnection_Stg_1"
     to_variable = "$EDP_QBQ_STG"
     connection_name_to = ""
-    print(connection_reference)
-    print(connection_reference.attrib["VARIABLE"])
     if connection_reference.attrib["VARIABLE"].lower() == from_variable.lower():
         connection_reference.set('VARIABLE', to_variable)
+        print(f"Connection changed to: {to_variable}")
     return connection_reference
 
 
@@ -124,11 +123,8 @@ def processFileWf(filename, file_name):
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
                 for session in wf.iter("SESSION"): 
-                    print("sess")
                     for sext in session.iter("SESSIONEXTENSION"):
-                        print("ok")
                         for connection in sext.iter("CONNECTIONREFERENCE"):              
-                            print("okconn") 
                             connection = updateConnectionReference(connection)
 
 
