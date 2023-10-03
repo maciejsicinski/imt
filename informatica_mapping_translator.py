@@ -41,6 +41,20 @@ os.makedirs(table_names_errors_dir_path, exist_ok=True)
 os.makedirs(folder_path_wf, exist_ok=True)
 os.makedirs(xml_output_dir_wf, exist_ok=True)
 
+
+def updateConnectionReference(connection_reference):
+    from_variable = "$DBConnection_Stg_1"
+    to_variable = "$EDP_QBQ_STG"
+    connection_name_to = ""
+
+    if connection_reference.attrib["VARIABLE"].lower() == from_variable.lower():
+        connection_reference.set('VARIABLE', to_variable)
+        connection_reference.set('CONNECTIONNAME', connection_name_to)
+
+
+    return connection_reference
+
+
 def removeFiles(folder_path):
     file_list = os.listdir(folder_path)
 
@@ -110,6 +124,10 @@ def processFileWf(filename, file_name):
                 wf_name = wf.attrib["NAME"]
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
+                for session in wf.iter("SESSION"): 
+                    for sext in session.iter("SESSIONEXTENTION"):
+                        for connection in sext.iter("CONNECTIONREFERENCE"):                      
+                            connection = updateConnectionReference(connection)
 
 
 
