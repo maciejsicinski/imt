@@ -128,7 +128,9 @@ def processFileWf(filename, file_name):
                     wf_total[wf_name] = True 
                 for session in wf.iter("SESSION"): 
                     for sext in session.iter("SESSIONEXTENTION"):
-                        for connection in sext.iter("CONNECTIONREFERENCE"):               
+                        print("ok")
+                        for connection in sext.iter("CONNECTIONREFERENCE"):              
+                            print("ok") 
                             connection = updateConnectionReference(connection)
 
 
