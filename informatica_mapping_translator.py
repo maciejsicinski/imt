@@ -122,11 +122,15 @@ def processFileWf(filename, file_name):
                         mapping_total[mapping_name] = True 
             for wf in folder.iter("WORKFLOW"):        
                 wf_name = wf.attrib["NAME"]
+                print(wf.attrib["NAME"])
                 if wf_name not in wf_total:
                     wf_total[wf_name] = True 
                 for session in wf.iter("SESSION"): 
+                    print(session)
                     for sext in session.iter("SESSIONEXTENTION"):
-                        for connection in sext.iter("CONNECTIONREFERENCE"):                      
+                        print(sext)
+                        for connection in sext.iter("CONNECTIONREFERENCE"):   
+                            print(connection)                   
                             connection = updateConnectionReference(connection)
 
 
@@ -333,7 +337,7 @@ def replaceLoadIdExp(transformation):
     ----------
     transformation : (Element)
         An element of the XML document.
-
+cat info    
     Returns
     -------
     bool
