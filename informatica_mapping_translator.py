@@ -45,7 +45,6 @@ os.makedirs(xml_output_dir_wf, exist_ok=True)
 def updateConnectionReference(connection_reference):
     from_variable = "$DBConnection_Stg_1"
     to_variable = "$EDP_QBQ_STG"
-    connection_name_to = ""
     if connection_reference.attrib["VARIABLE"].lower() == from_variable.lower():
         connection_reference.set('VARIABLE', to_variable)
         print(f"Connection changed to: {to_variable}")
